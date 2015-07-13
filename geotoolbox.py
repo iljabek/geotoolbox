@@ -176,7 +176,7 @@ class txt(object):
 	def Txt2Hex(TXT):
 		tmpTXT = txt(TXT)
 		return tmpTXT.hex
-		#return "".join([ (format(i, '#04X'))[2:4] for i in txt.Txt2List(TXT) ])
+		#return "".join([  "{0:02X}".format(i) for i in txt.Txt2List(TXT) ])
 
 	@staticmethod
 	def Bin2Txt(BIN):
@@ -267,7 +267,100 @@ class txt(object):
 		return OUT
 
 
-	#non-static
+def bitDisassembleImage(imgpath):
+	"""
+	disassemble image into Red, Green, Blue, Value, RGB-Mix for all 8bits
+	usefull 
+	"""
+	 
+	import os,sys
+	import Image
+	#imgpath = sys.argv[1]  
+
+	img = Image.open(imgpath).convert('RGB')
+
+	imgr = [Image.new( 'RGB', img.size, "black") for i in range(8)]
+	imgg = [Image.new( 'RGB', img.size, "black") for i in range(8)]
+	imgb = [Image.new( 'RGB', img.size, "black") for i in range(8)]
+	imga = [Image.new( 'RGB', img.size, "black") for i in range(8)]
+	imgv = [Image.new( 'RGB', img.size, "black") for i in range(8)]
+	
+	pxr  = [i.load() for i in imgr]
+	pxg  = [i.load() for i in imgg]
+	pxb  = [i.load() for i in imgb]
+	pxa  = [i.load() for i in imga]
+	pxv  = [i.load() for i in imgv]
+
+	
+	for x in range(img.size[0]): 
+		for y in range(img.size[1]):
+			r,g,b = img.getpixel((x,y))
+			for bit in range(8):
+				pxr[bit][x,y] = ( (((r>>bit)&0x1)<<8)  ,0 ,0) 
+				pxg[bit][x,y] = ( 0, (((g>>bit)&0x1)<<8)  ,0) 
+				pxb[bit][x,y] = ( 0, 0, (((b>>bit)&0x1)<<8) )
+				rl= (((r>>bit)&0x1)<<8)
+				gl= (((g>>bit)&0x1)<<8)
+				bl= (((b>>bit)&0x1)<<8)
+				vl = (rl&gl&bl)
+				pxa[bit][x,y] = ( rl, gl, bl) 
+				pxv[bit][x,y] = ( vl, vl, vl) 
+#
+	for bit in range(8):
+		imgr[bit].save(imgpath+"_r"+str(bit)+".png")
+		imgg[bit].save(imgpath+"_g"+str(bit)+".png")
+		imgb[bit].save(imgpath+"_b"+str(bit)+".png")
+		imgv[bit].save(imgpath+"_v"+str(bit)+".png")
+		imga[bit].save(imgpath+"_a"+str(bit)+".png")
+	if False:
+	#print img.size[0],"x",img.size[1]," = ", img.size[1]*img.size[0]
+	
+		Rxy = img.tostring()[0::3]
+		Gxy = img.tostring()[1::3]
+		Bxy = img.tostring()[2::3]
+		#print R[img.size[0]*0],R[img.size[0]*1],R[img.size[0]*2] 
+		
+		Ryx,Gyx,Byx=[],[],[]
+		for x in xrange(img.size[0]):    # for every pixel:
+			for y in xrange(img.size[1]):
+				Ryx.append(Rxy[x+y*img.size[0]])
+				Gyx.append(Gxy[x+y*img.size[0]])
+				Byx.append(Bxy[x+y*img.size[0]])
+	
+	
+def decodeRepeatNumber(numstr):
+	"""
+	41 => 1111; 14 => 4
+	GCHJ89, GCWXWP
+	"""
+	p=numstr
+	print p
+	while len(p)%2 == 0:
+		p="".join([ int(p[i])*p[i+1] for i in range(0,len(p),2) ]);
+		print p
+
+def encodeRepeatNumber(numstr):
+	"TODO"
+	pass
+
+def GetFreq(LIST):
+	hist=[[l,LIST.count(l)] for l in [c for c in range(256)]]
+	histnonz=[[l,LIST.count(l)] for l in [c for c in range(256)] if LIST.count(l)>0]
+	alph, freq = [v[0] for v in hist], [v[1] for v in hist] 
+	return freq
+
+def Get8BitFreq(TXT):
+	Lall = Txt2List(TXT)
+	L = [0,0,0,0,0,0,0,0]
+	L[0] += sum([ C>>0 & 1 for C in Lall ])
+	L[1] += sum([ C>>1 & 1 for C in Lall ])
+	L[2] += sum([ C>>2 & 1 for C in Lall ])
+	L[3] += sum([ C>>3 & 1 for C in Lall ])
+	L[4] += sum([ C>>4 & 1 for C in Lall ])
+	L[5] += sum([ C>>5 & 1 for C in Lall ])
+	L[6] += sum([ C>>6 & 1 for C in Lall ])
+	L[7] += sum([ C>>7 & 1 for C in Lall ])
+	return L
 
 
 lorem="""
